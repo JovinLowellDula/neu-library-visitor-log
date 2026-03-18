@@ -21,22 +21,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) fetchUser(token);
-    else setLoading(false);
+    if (token) {
+      fetchUser(token);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const fetchUser = async (token: string) => {
     try {
-      const res = await api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await api.get('/api/auth/me', { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
       setUser(res.data);
-    } catch { localStorage.removeItem('token'); }
-    finally { setLoading(false); }
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      localStorage.removeItem('token');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const login = () => window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
-  const logout = () => { localStorage.removeItem('token'); setUser(null); router.push('/'); };
+  const login = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
+  };
 
-  return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>;
+  const logout = () => { 
+    localStorage.removeItem('token'); 
+    setUser(null); 
+    window.location.href = '/';
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => useContext(AuthContext);
