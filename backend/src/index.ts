@@ -12,7 +12,7 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 4000;
-const ADMIN_EMAIL = 'jcesperanza@neu.edu.ph';
+const ADMIN_EMAILS = ['jcesperanza@neu.edu.ph', 'jovinlowell.dula@neu.edu.ph'];
 
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
@@ -31,7 +31,7 @@ passport.use(new GoogleStrategy({
   const email = profile.emails?.[0].value;
   if (!email?.endsWith('@neu.edu.ph')) return done(null, false);
   
-  const role = email === ADMIN_EMAIL ? 'ADMIN' : 'USER';
+  const role = ADMIN_EMAILS.includes(email) ? 'ADMIN' : 'USER';
   let user = await prisma.user.findUnique({ where: { googleId: profile.id } });
   
   if (!user) {
@@ -65,12 +65,22 @@ const requireAdmin = (req: any, res: any, next: any) => {
 };
 
 // Auth Routes
-app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-app.get('/api/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login-failed' }), (req, res) => {
-  const user = req.user as any;
-  const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET!, { expiresIn: '24h' });
-  res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
-});
+app.get('/api/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login-failed' }), 
+  (req, res) => {
+    try {
+      if (!req.user) {
+        return res.redirect(`${process.env.FRONTEND_URL}/login-failed`);
+      }
+      const user = req.user as any;
+      const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET!, { expiresIn: '24h' });
+      res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+    } catch (error) {
+      console.error('Callback error:', error);
+      res.redirect(`${process.env.FRONTEND_URL}/login-failed`);
+    }
+  }
+);
 
 app.get('/api/auth/me', requireAuth, async (req: any, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.user.userId }, select: { id: true, email: true, name: true, role: true, picture: true } });
@@ -136,6 +146,6 @@ app.get('/api/stats/visitor-stats', requireAuth, requireAdmin, async (req, res) 
   });
 });
 
-app.listen(port, "0.0.0.0", () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on http://0.0.0.0:${port}`);
 });
