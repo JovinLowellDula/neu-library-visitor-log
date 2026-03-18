@@ -65,6 +65,8 @@ const requireAdmin = (req: any, res: any, next: any) => {
 };
 
 // Auth Routes
+app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
 app.get('/api/auth/google/callback', 
   passport.authenticate('google', { failureRedirect: '/login-failed' }), 
   (req, res) => {
@@ -147,5 +149,5 @@ app.get('/api/stats/visitor-stats', requireAuth, requireAdmin, async (req, res) 
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is running on http://0.0.0.0:${port}`);
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });
