@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum VisitReason {
+  STUDY
+  RESEARCH
+  BORROW_BOOKS
+  RETURN_BOOKS
+  COMPUTER_USE
+  MEETING
+  OTHER
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  name       String?
+  role       UserRole @default(USER)
+  googleId   String   @unique
+  picture    String?
+  createdAt  DateTime @default(now())
+  visits     Visit[]
+}
+
+model Visit {
+  id           String      @id @default(uuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  fullName     String
+  studentId    String?
+  college      String
+  isEmployee   Boolean     @default(false)
+  employeeType String?
+  reason       VisitReason
+  otherReason  String?
+  checkInTime  DateTime    @default(now())
+  checkOutTime DateTime?
+  createdAt    DateTime    @default(now())
+}
