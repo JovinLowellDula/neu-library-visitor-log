@@ -19,11 +19,14 @@ app.use(express.json());
 app.use(session({ secret: process.env.JWT_SECRET!, resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
+const CALLBACK_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://neu-library-visitor-log-production.up.railway.app/api/auth/google/callback'
+  : 'http://localhost:4000/api/auth/google/callback';
 
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID!,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  callbackURL: '/api/auth/google/callback'
+  callbackURL: CALLBACK_URL  // ← Changed from '/api/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
   const email = profile.emails?.[0].value;
   if (!email?.endsWith('@neu.edu.ph')) return done(null, false);
