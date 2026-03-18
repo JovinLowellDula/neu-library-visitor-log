@@ -133,4 +133,6 @@ app.get('/api/stats/visitor-stats', requireAuth, requireAdmin, async (req, res) 
   });
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server is running on http://0.0.0.0:${port}`);
+});
