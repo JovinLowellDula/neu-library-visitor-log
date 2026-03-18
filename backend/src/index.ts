@@ -38,8 +38,12 @@ passport.use(new GoogleStrategy({
     user = await prisma.user.create({
       data: { email, name: profile.displayName, googleId: profile.id, picture: profile.photos?.[0].value, role }
     });
+  } else {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { role }
+    });
   }
-  done(null, user);
 }));
 
 passport.serializeUser((user: any, done) => done(null, user.id));
